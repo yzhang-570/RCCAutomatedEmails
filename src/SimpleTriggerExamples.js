@@ -1,17 +1,34 @@
 // something changed :D
 
-/**
- * The event handler triggered when opening the spreadsheet.
- * @param {Event} e The onOpen event.
- * @see https://developers.google.com/apps-script/guides/triggers#onopene
- */
-function onOpen(e) {
-  // Add a custom menu to the spreadsheet.
-  SpreadsheetApp.getUi() // Or DocumentApp, SlidesApp, or FormApp.
-    .createMenu("Custom Menu")
-    .addItem("First item", "menuItem1")
-    .addItem("Second item", "menuItem2")
-    .addToUi();
+// watching changes
+
+// a change
+// another change at not 10:11am
+
+// test: taking text input via menu
+function showPrompt() {
+  // if canceled, then don't show subsequent choices;
+
+  var ui = SpreadsheetApp.getUi();
+  // Opens a pop-up box with a text field
+  var result = ui.prompt('Input Required', 'Please type your text here:', ui.ButtonSet.OK_CANCEL);
+  
+  // Process the user's input
+  if (result.getSelectedButton() == ui.Button.OK) {
+    var textInput = result.getResponseText();
+    ui.alert('You entered: ' + textInput);
+  }
+
+  // no dropdowns so need to strictly enforce input -> Social, Non-social, Ambassador Meeting, Tabling
+  var ui2 = SpreadsheetApp.getUi();
+
+  var result2 = ui.prompt('Input Required',
+    'Your Event is a:\nSocial, Non-social, Ambassador Meeting, Tabling', ui.ButtonSet.OK_CANCEL);
+    // Process the user's input
+  if (result2.getSelectedButton() == ui.Button.OK) {
+    var textInput2 = result2.getResponseText();
+    ui.alert('Your event type: ' + textInput2); 
+  }
 }
 
 /**
@@ -19,13 +36,13 @@ function onOpen(e) {
  * @param {Event} e The onEdit event.
  * @see https://developers.google.com/apps-script/guides/triggers#onedite
  */
-function onEdit(e) {
-  // Set a comment on the edited cell to indicate when it was changed.
-  const range = e.range;
-  range.setNote(`HIHIHI! Last modified: ${new Date()}`);
-  Logger.log('range: ' + range);
-  Logger.log('range a1notion: ' + range.getA1Notation());
-}
+// function onEdit(e) {
+//   // Set a comment on the edited cell to indicate when it was changed.
+//   const range = e.range;
+//   range.setNote(`HIHIHI! Last modified: ${new Date()}`);
+//   Logger.log('range: ' + range);
+//   Logger.log('range a1notion: ' + range.getA1Notation());
+// }
 
 /**
  * The event handler triggered when the selection changes in the spreadsheet.
