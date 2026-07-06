@@ -1,22 +1,27 @@
-import js from "@eslint/js";
+import pluginJs from "@eslint/js";
 import googleappsscript from "eslint-plugin-googleappsscript";
+import globals from "globals";
 
 export default [
-  js.configs.recommended, // Injects ESLint's base rules
+  pluginJs.configs.recommended, 
+
   {
     files: ["**/*.js"],
     plugins: {
       googleappsscript: googleappsscript
     },
     languageOptions: {
-      // Merges the Google Apps Script global variables into your environment
+      ecmaVersion: "latest",
+      sourceType: "module", 
       globals: {
+        ...globals.browser,
         ...googleappsscript.environments.googleappsscript.globals
       }
     },
     rules: {
-      "no-unused-vars": "warn", // Warns about dead variables
-      "no-undef": "error"       // Catches typo mistakes in functions/variables
+      // turn off both to remove warnings since Apps Script merges files at runtime
+      "no-unused-vars": "off", 
+      "no-undef": "off"
     }
   }
 ];
