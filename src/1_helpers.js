@@ -2,18 +2,18 @@
  * Returns whether the current user is in the allowed users list.
  *
  * @param {{user?: {email: string}}} e - The event object from the triggering menu action
- * @param {string[]} allowedUsers - Email addresses permitted to run the tool.
  */
-function authorizeUser_(e, allowedUsers) {
+function authorizeUser_(e) {
+
+  // Get email of current user
   var userEmail = Session.getActiveUser().getEmail();
-  
-  // Fallback check: try getting the email from the event object if available
+  // Fallback: get email from event object
   if (!userEmail && e && e.user) {
     userEmail = e.user.email;
   }
 
   // Check if user is an authorized user
-  const isAuthorized = allowedUsers.find(email => 
+  const isAuthorized = CONFIG.allowedUsers.find(email => 
     email.toLowerCase() === userEmail.toLowerCase()
   ) !== undefined // returns undefined if not found
   
@@ -36,7 +36,9 @@ function authorizeUser_(e, allowedUsers) {
  * @overload @param {string[]} headers @returns {string[]}
  */
 /**
- * Applies lowercase, replaces whitespace with single space, and trims 
+ * Applies lowercase, replaces whitespace with single space, and trims.
+ * 
+ * Accepts strings and string arrays.
  * 
  * @param {Array<*> | string[] | string} headers
  * @returns {string[] | string}
@@ -53,41 +55,58 @@ function normalize_(headers) {
 }
 
 /**
- * Internal helper: Returns whether an array (headers) contains a target string (targetName = required header column)
- * 
- * @param {string[] | null} headers
- * @param {string} targetName
- * @returns {number | null}
+ * Maps headers names to their indices in a sheet's header row.
+ *
+ * @param {string[]} targetHeaders - array of header names to map
+ * @param {Array<*>} sourceRow - array of sheet's actual header row
+ * @returns {Object<string, number>}
  */
-function findRequiredHeaderCol_(headers, targetName) {
-  if(!headers || !targetName) return null;
-  const idx = headers.findIndex(header => (normalize_(header)).includes(normalize_(targetName.toLowerCase())));
-  if (idx === -1) throw new Error(`Column "${targetName}" not found. (case-insensitive)`);
-  return idx;
+function mapHeaderIndices_(targetHeaders, sourceRow) {
+  const normRow = normalize_(sourceRow);
+  /** @type {Object<string, number>} */
+  const indexMap = {};
+  targetHeaders.forEach(header => {
+    indexMap[header] = normRow.findIndex(h => normalize_(h) === normalize_(header));
+  });
+  return indexMap;
 }
 
 /**
- * Returns index of header row with given column names (case-insensitive)
- * from a specific sheet
- * Returns -1 if any target columns weren't found
+ * Returns index of header row with columns matching target header names
+ * from a specific sheet (case-insensitive)
  * 
- * @param {string[] | null} targetHeaders
- * @param {GoogleAppsScript.Spreadsheet.Sheet} sheet
+ * Returns -1 if no matching row found
+ * 
+ * @param {string[]} targetHeaders
+ * @param {GoogleAppsScript.Spreadsheet.Sheet} sourceSheet
  * @returns {number | null}
  */
-function findHeaderRowIndex_(targetHeaders, sheet) {
-  if(!targetHeaders || !sheet) return null;
-  const rowData = sheet.getDataRange().getValues();
+function findHeaderRowIndex_(targetHeaders, sourceSheet) {
+  if(!targetHeaders || !sourceSheet) return null;
+  const sheetData = sourceSheet.getDataRange().getValues();
+  const normHeaders = normalize_(targetHeaders);
   try {
-    const idx = rowData.findIndex(row => (header.toLowerCase()).includes(targetName.toLowerCase()));
-    if (idx === -1) throw new Error(`Column "${targetName}" not found. (case-insensitive)`);
+    const idx = sheetData.findIndex(row => {
+      const normRow = normalize_(row);
+      return normHeaders.every(header => normRow.includes(header));
+    });
+    if (idx === -1) console.log(`Header row: ${targetHeaders} not found.`);
     return idx;
   }
   catch (err) {
-    console.log(`[findHeaderRowIndex] err - for ${sheet.getName()}`)
+    console.log(`[findHeaderRowIndex] error while processing ${sourceSheet.getName()}.`)
     return -1;
   }
 }
+
+
+
+
+
+
+
+
+
 
 // /**
 //  * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} ss
